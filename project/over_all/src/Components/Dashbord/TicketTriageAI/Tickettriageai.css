@@ -1,0 +1,73 @@
+/* Tickettriageai.css */
+
+.tickettriageai {
+    display: flex;
+    height: 100vh;
+  }
+  
+  .sidebar {
+    width: 210px;
+    padding: 20px;
+    background-color: #f8f8f8;
+    overflow-y: auto; /* Make the sidebar scrollable if the content overflows */
+    max-height: 100vh;
+  }
+  
+  .content {
+    flex-grow: 1;
+    padding: 20px;
+    background-color: #fff;
+  }
+  
+  .creativity-adjust {
+    display: flex;
+    align-items: center;
+  }
+  
+  .creativity-value {
+    margin: 0 10px;
+  }
+  
+  button {
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    padding: 8px 16px;
+    cursor: pointer;
+  }
+  
+  button:hover {
+    background-color: #0056b3;
+  }
+  
+  .email-textarea {
+    width: 90%;
+    height: 100px; /* Adjust height as per your requirement */
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 16px;
+    resize: none; /* Prevents user from resizing the textarea */
+    overflow-y: auto; /* Allows vertical scrolling when content exceeds */
+    word-wrap: break-word; /* Ensures long lines wrap instead of overflowing */
+  }
+  
+  .email-textarea:focus {
+    outline: none;
+    border-color: #007bff; /* Change border color on focus */
+  }
+  
+  .acknowledgement-btn {
+    padding: 10px 20px;
+    background-color: #28a745;
+    border-radius: 5px;
+    color: white;
+    border: none;
+    cursor: pointer;
+  }
+  
+  .acknowledgement-btn:hover {
+    background-color: #218838;
+  }
+  

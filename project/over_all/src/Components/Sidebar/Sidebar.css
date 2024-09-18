@@ -1,0 +1,34 @@
+/* Sidebar container */
+.sidebar {
+    width: 13rem;
+    height: 80vh;
+    background-color: #f4f4f4;
+    padding: 1rem;
+    position: fixed;
+    top: 0;
+    left: 0;
+    border-right: 1px solid #ddd;
+    margin-top: 5rem;
+  }
+  
+  /* Sidebar links container */
+  .sidebarLinks {
+    list-style: none;
+    margin: 0;
+  }
+  
+  /* Sidebar link styles */
+  .sidebarLink {
+    text-decoration: none;
+    color: #333;
+    font-size: 18px;
+    display: block;
+    padding: 5px;
+    /* margin: 10px 0; */
+  }
+
+  /* Hover effect for links */
+  .sidebarLink:hover {
+    color: #007bff; /* Adjust the color on hover */
+  }
+  

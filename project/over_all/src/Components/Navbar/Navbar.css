@@ -1,0 +1,41 @@
+/* Navbar container */
+.navbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 20px;
+  }
+  
+  /* Logo styling */
+  .logo {
+    height: 50px; /* Adjust the size of the logo as needed */
+    cursor: pointer;
+  }
+  
+  /* Navigation links container */
+  .navLinks {
+    list-style: none;
+    display: flex;
+    gap: 20px;
+    margin: 0; /* Remove default margin */
+    padding: 0; /* Remove default padding */
+  }
+  
+  /* Navigation links */
+  .navLinks li {
+    margin: 0;
+  }
+  
+  /* Navigation link styles */
+  .navLinks a {
+    text-decoration: none;
+    color: #9c2525; /* White color for links */
+    font-size: 16px; /* Adjust font size as needed */
+    transition: color 0.3s ease; /* Smooth color transition on hover */
+  }
+  
+  /* Hover effect for links */
+  .navLinks a:hover {
+    color: #ddd; /* Light gray color on hover */
+  }
+  
