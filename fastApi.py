@@ -104,3 +104,23 @@ async def query_ollama(
         return {"response": response.content if hasattr(response, 'content') else str(response)}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+
+class LoginRequest(BaseModel):
+    username: str
+    password: str
+
+# Hardcoded credentials
+valid_username = "Indium"
+valid_password = "Indium@123"
+
+# Define a login route
+@app.post("/login")
+def login(request: LoginRequest):
+    # Check if the provided credentials are correct
+    if request.username == valid_username and request.password == valid_password:
+        return {"message": "Login successful", "status": "success"}
+    else:
+        # Raise an HTTP exception if the credentials are incorrect
+        raise HTTPException(status_code=401, detail="Invalid username or password")
