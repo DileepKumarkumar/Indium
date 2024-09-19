@@ -1,0 +1,84 @@
+    /* Container for the sign-up form */
+#signuppage{
+    background-image: url('./Building-AI-ML-DL-Models-for-the-Financial-Services-Industry.png'); /* Path to your background image */
+    background-size: cover; /* Make sure the image covers the entire container */
+    background-position: center; /* Center the image */
+    background-repeat: no-repeat; /* Prevent image repetition */
+
+
+}
+    .signup-container {
+    width: 100%;
+    max-width: 400px;
+    margin: auto;
+    padding: 20px;
+    background-color:transparent; /* Light gray background */
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    position: relative;
+    top: 50%;
+
+  }
+  
+  /* Form headings */
+  .signup-container h2 {
+    text-align: center;
+    margin-bottom: 20px;
+    font-size: 24px;
+    color: #fcfafa; /* Darker text color */
+  }
+  
+  /* Style for form labels */
+  .signup-container label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: bold;
+  }
+  
+  /* Style for form inputs */
+  .signup-container input[type="text"], 
+  .signup-container input[type="password"] {
+    width: 100%;
+    padding: 12px;
+    margin: 8px 0 16px 0;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    box-sizing: border-box;
+  }
+  
+  /* Style for the sign-up button */
+  .signup-container button[type="submit"] {
+    background-color: #1baedb; /* Green background */
+    color: white;
+    padding: 14px 20px;
+    margin: 8px 0;
+    border: none;
+    cursor: pointer;
+    width: 100%;
+    border-radius: 4px;
+    font-size: 16px;
+  }
+  
+  .signup-container button[type="submit"]:hover {
+    opacity: 0.8; /* Slightly transparent on hover */
+  }
+  
+  /* Style for the cancel button */
+  .signup-container .cancelbtn {
+    background-color: #f44336; /* Red background */
+    color: white;
+    padding: 10px 18px;
+    border: none;
+    cursor: pointer;
+    border-radius: 4px;
+    font-size: 16px;
+  }
+  
+  /* Responsive design for smaller screens */
+  @media screen and (max-width: 600px) {
+    .signup-container {
+      width: 90%;
+      padding: 15px;
+    }
+  }
+  

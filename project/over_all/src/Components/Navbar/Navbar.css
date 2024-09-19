@@ -39,3 +39,13 @@
     color: #ddd; /* Light gray color on hover */
   }
   
+  #logout{
+    color: #9c2525; /* White color for links */
+    font-size: 16px; /* Adjust font size as needed */
+    transition: color 0.3s ease; 
+  }
+
+  #logout:hover{
+    color: #ddd; /* Light gray color on hover */
+
+  }

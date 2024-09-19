@@ -118,7 +118,39 @@ const Aiqgenapp = () => {
         <select className="question-type-dropdown" value={selectedQuestionType} onChange={handleQuestionTypeChange}>
           {/* Add other options here */}
           <option value="Informational Questions">Informational Questions</option>
-          {/* other options */}
+          <option value="Clarification Questions">Clarification Questions</option>
+          <option value="Probing Questions">Probing Questions</option>
+          <option value="Closed Questions">Closed Questions</option>
+          <option value="Open-Ended Questions">Open-Ended Questions</option>
+          <option value="Leading Questions">Leading Questions</option>
+          <option value="Reflective Questions">Reflective Questions</option>
+          <option value="Hypothetical Questions">Hypothetical Questions</option>
+          <option value="Descriptive Questions">Descriptive Questions</option>
+          <option value="Diagnostic Questions">Diagnostic Questions</option>
+          <option value="Predictive Questions">Predictive Questions</option>
+          <option value="Prescriptive Questions">Prescriptive Questions</option>
+          <option value="Zero-Shot Questions">Zero-Shot Questions</option>
+          <option value="One-Shot Questions">One-Shot Questions</option>
+          <option value="Few-Shot Questions">Few-Shot Questions</option>
+          <option value="Chain-of-Thought Questions">Chain-of-Thought Questions</option>
+          <option value="Opinion-Based Questions">Opinion-Based Questions</option>
+          <option value="Instructional Questions">Instructional Questions</option>
+          <option value="Creative Questions">Creative Questions</option>
+          <option value="Problem-Solving Questions">Problem-Solving Questions</option>
+          <option value="Conversational Questions">Conversational Questions</option>
+          <option value="Role-Playing Questions">Role-Playing Questions</option>
+          <option value="Contrastive Questions">Contrastive Questions</option>
+          <option value="Vague Questions">Vague Questions</option>
+          <option value="Troubleshooting Questions">Troubleshooting Questions</option>
+          <option value="Recommendation Questions">Recommendation Questions</option>
+          <option value="Location - Based Questions">Location - Based Questions</option>
+          <option value="Computational Questions">Computational Questions</option>
+          <option value="Benchmarking Questions">Benchmarking Questions</option>
+          <option value="Task Based Questions">Task Based Questions</option>
+          <option value="Multimodal and Multimedia Questions">Multimodal and Multimedia Questions</option>
+          <option value="Programming Questions">Programming Questions</option>
+          <option value="Language assistance">Language assistance</option>
+          <option value="Affirmative and Negative Questions">Affirmative and Negative Questions</option>
         </select>
 
         <p className="sidebar-label">No. Of Questions:</p>
