@@ -9,8 +9,8 @@ const Sidebar = () => {
       <ul className="sidebarLinks">
         <li><Link to="/dashboard" className="sidebarLink">Dashboard</Link></li>
         <li><Link to="/aiqgenapp" className="sidebarLink">AIQGen App</Link></li>
-        <li><Link to="/code-generation" className="sidebarLink">Code Generation</Link></li>
-        <li><Link to="/self-healing" className="sidebarLink">Self Healing</Link></li>
+        <li><Link to="/Test-Case-Generation" className="sidebarLink">Test Case Generation</Link></li>
+        <li><Link to="/AItcgen" className="sidebarLink">AI TCGen</Link></li>
         <li><Link to="/ticket-classification" className="sidebarLink">Ticket Classification</Link></li>
         <li><Link to="/ticket-triage-ai" className="sidebarLink">Ticket Triage AI</Link></li>
 
