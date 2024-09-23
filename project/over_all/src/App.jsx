@@ -2,8 +2,8 @@ import React, { useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import Home from './Components/Home/Home';
 import Dashboard from './Components/Dashbord';
-import CodeGeneration from './Components/Dashbord/codegeneration/Codegeneration';
-import SelfHealing from './Components/Dashbord/SelfHealing/Selfhealing';
+import TestCaseGeneration from './Components/Dashbord/Testcasegeneration/TestCaseGeneration';
+import AITCGen from './Components/Dashbord/AITCGen/Aitcgen';
 import TicketClassification from './Components/Dashbord/TicketClassification/TicketClassification';
 import Aiqgenapp from './Components/Dashbord/AIQGen/Aiqgenapp';
 import Tickettriageai from './Components/Dashbord/TicketTriageAI/Tickettriageai';
@@ -38,8 +38,8 @@ function App() {
             <Route path="/" element={<Home onLogout={handleLogout} />}>
               <Route path="dashboard" element={<Dashboard />} />
               <Route path="aiqgenapp" element={<Aiqgenapp />} />
-              <Route path="code-generation" element={<CodeGeneration />} />
-              <Route path="self-healing" element={<SelfHealing />} />
+              <Route path="Test-Case-Generation" element={<TestCaseGeneration />} />
+              <Route path="AItcgen" element={<AITCGen />} />
               <Route path="ticket-classification" element={<TicketClassification />} />
               <Route path="ticket-triage-ai" element={<Tickettriageai />} />
               <Route path="*" element={<Navigate to="/dashboard" />} />

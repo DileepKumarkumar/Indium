@@ -1,8 +1,9 @@
-from fastapi import FastAPI, HTTPException, File, UploadFile, Form
+from fastapi import FastAPI, HTTPException, File, UploadFile, Form, Body
 from pydantic import BaseModel
 from typing import Optional, List, Dict
-from langchain_community.chat_models import ChatOllama
 from fastapi.middleware.cors import CORSMiddleware
+from langchain_community.chat_models import ChatOllama
+from langchain.schema import HumanMessage, SystemMessage
 
 app = FastAPI()
 
@@ -20,6 +21,75 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Model for Login Request
+class LoginRequest(BaseModel):
+    username: str
+    password: str
+
+# Hardcoded credentials for demo
+valid_username = "Indium"
+valid_password = "Indium@123"
+
+# Define login route
+@app.post("/login")
+def login(request: LoginRequest):
+    if request.username == valid_username and request.password == valid_password:
+        return {"message": "Login successful", "status": "success"}
+    else:
+        raise HTTPException(status_code=401, detail="Invalid username or password")
+
+# Request model for test case generation
+class TestCaseRequest(BaseModel):
+    selected_model: str
+    content: str
+    test_scenario: str
+    temp: float
+
+# Dictionary to define various test scenarios
+test_scenario_dict = {
+    'Functional': 'Functional test scenarios',
+    'Exploratory': 'Exploratory test scenarios',
+    'Performance': 'Performance test scenarios',
+    'Security': 'Security test scenarios as per OWASP standards'
+}
+
+# Function to generate test cases based on the scenario and content
+def generate_test_cases(model, content, test_scenario, temp):
+    prompt = [
+        {"role": "system", "content": "You are an Experienced Test Manager."},
+        {"role": "user", "content": f"Write comprehensive {test_scenario} test scenarios for the following Acceptance Criteria: " + content},
+        {"role": "user", "content": f"""Generate {test_scenario_dict[test_scenario]} with:
+        1. Objective
+        2. Gherkin scripts covering the following aspects:
+            - User roles interacting with the system
+            - Role-specific actions and behaviors
+            - Validation of expected behavior under normal operating conditions
+            - Simulation of error conditions, including validation errors, invalid inputs, or system failures."""}
+    ]
+    
+    local_llm = ChatOllama(model=model, base_url="http://localhost:11434", temperature=temp)
+    messages = [
+        SystemMessage(content=prompt[0]["content"]),
+        HumanMessage(content=prompt[1]["content"]),
+        HumanMessage(content=prompt[2]["content"])
+    ]
+    
+    response = local_llm.invoke(messages)
+    return response.content
+
+# API endpoint for generating test cases
+@app.post("/generate-testcases")
+def get_test_cases(request: TestCaseRequest):
+    content = request.content
+    model = request.selected_model
+    temp = request.temp
+    test_scenario = request.test_scenario
+    
+    # Generate Gherkin scripts and test cases
+    zerkin_script = generate_test_cases(model, content, test_scenario, temp)
+    return {"zerkinScript": zerkin_script}
+
+# Function to generate a QA generation prompt
 def generate_prompt_forQAGen(
     distribution: Dict[str, int],
     selected_Qtype: List[str],
@@ -75,12 +145,9 @@ async def query_ollama(
     file: Optional[UploadFile] = File(None)
 ):
     try:
-        # Extract the context
         context = contentText or url or ""
 
-        # Define the distribution based on the selected difficulty
         distribution = {'Easy': 0, 'Medium': 0, 'Hard': 0}
-
         if difficulty == 'Easy':
             distribution['Easy'] = numOfQuestions
         elif difficulty == 'Medium':
@@ -89,38 +156,11 @@ async def query_ollama(
             distribution['Hard'] = numOfQuestions
 
         selected_Qtype = [questionType]
-
-        # Generate the prompt using the function
         prompt = generate_prompt_forQAGen(distribution, selected_Qtype, generateWithAnswers, context)
 
-        # Log the generated prompt for debugging
-        print("Generated Prompt:", prompt)
-
-        # Initialize the model
         model_instance = ChatOllama(model=model, temperature=temperature)
         response = model_instance.invoke(prompt)
 
-        # Return the formatted response
         return {"response": response.content if hasattr(response, 'content') else str(response)}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-
-
-
-class LoginRequest(BaseModel):
-    username: str
-    password: str
-
-# Hardcoded credentials
-valid_username = "Indium"
-valid_password = "Indium@123"
-
-# Define a login route
-@app.post("/login")
-def login(request: LoginRequest):
-    # Check if the provided credentials are correct
-    if request.username == valid_username and request.password == valid_password:
-        return {"message": "Login successful", "status": "success"}
-    else:
-        # Raise an HTTP exception if the credentials are incorrect
-        raise HTTPException(status_code=401, detail="Invalid username or password")

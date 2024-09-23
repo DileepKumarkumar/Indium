@@ -1,0 +1,79 @@
+/* .testcase-generation {
+    display: flex;
+  }
+  
+  .sidebar {
+    width: 30%;
+    padding: 20px;
+    background-color: #f4f4f4;
+    border-right: 1px solid #ccc;
+  }
+  
+  .sidebar p {
+    margin-bottom: 10px;
+  }
+  
+  select {
+    width: 100%;
+    padding: 8px;
+    margin-bottom: 15px;
+  }
+  
+  .content {
+    width: 70%;
+    padding: 20px;
+  }
+  
+  .creativity-adjust {
+    display: flex;
+    align-items: center;
+  }
+  
+  .creativity-value {
+    margin: 0 10px;
+  }
+  
+  button {
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    padding: 8px 16px;
+    cursor: pointer;
+  }
+  
+  button:hover {
+    background-color: #0056b3;
+  }
+  
+  .fetch-acceptance-btn {
+    background-color: #28a745;
+    padding: 10px 20px;
+  }
+  
+  .fetch-acceptance-btn:hover {
+    background-color: #218838;
+  }
+  
+  .additional-buttons {
+    margin-top: 20px;
+  }
+  
+  .generate-test-btn {
+    background-color: #17a2b8;
+    padding: 10px 20px;
+  }
+  
+  .generate-test-btn:hover {
+    background-color: #138496;
+  }
+  
+  .update-ado-btn {
+    background-color: #ffc107;
+    padding: 10px 20px;
+  }
+  
+  .update-ado-btn:hover {
+    background-color: #e0a800;
+  }
+   */
