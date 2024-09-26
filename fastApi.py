@@ -1,11 +1,21 @@
+import base64
+import re
 from fastapi import FastAPI, HTTPException, File, UploadFile, Form, Body
 from pydantic import BaseModel
 from typing import Optional, List, Dict
 from fastapi.middleware.cors import CORSMiddleware
 from langchain_community.chat_models import ChatOllama
 from langchain.schema import HumanMessage, SystemMessage
+import requests
+from base64 import b64encode
+import json
+from fastapi import BackgroundTasks
+import httpx
+
 
 app = FastAPI()
+
+
 
 # CORS Configuration
 orig_main = [
@@ -164,3 +174,155 @@ async def query_ollama(
         return {"response": response.content if hasattr(response, 'content') else str(response)}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+
+"---------------------------------------------------------------------"
+PAT = "pat_token"
+ORG = "revathyb"
+API_VERSION = "api-version=7.1"
+BASE_URL = f"https://dev.azure.com/{ORG}"
+
+
+class CriteriaRequest(BaseModel):
+    user_story_ids: List[int]
+    pat: str
+    base_url: str
+    api_version: str
+
+def get_projects(organization_url, personal_access_token):
+    """Fetch list of projects available in the organization."""
+    credentials = f":{personal_access_token}"
+    credentials_encoded = b64encode(credentials.encode()).decode("ascii")
+    headers = {
+        "Authorization": f"Basic {credentials_encoded}",
+        "Content-Type": "application/json"
+    }
+
+    response = requests.get(
+        f'{organization_url}/_apis/projects',
+        headers=headers
+    )
+
+    if response.status_code == 200:
+        projects = response.json()
+        return [project['name'] for project in projects['value']]
+    else:
+        print(f"Error fetching projects: {response.status_code} - {response.json()}")
+        raise HTTPException(status_code=response.status_code, detail=response.json())
+
+
+@app.get("/projects")
+async def fetch_projects():
+    """Endpoint to get projects from Azure DevOps."""
+    try:
+        base_url = f"https://dev.azure.com/{ORG}"
+        projects = get_projects(base_url, PAT)
+        return {"projects": projects}
+    except Exception as e:
+        print(f"Error: {str(e)}")  # Log the error for debugging
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+
+
+def get_user_stories(organization_url, personal_access_token, query_params, project_name):
+    """This method will return user stories that are present in Azure DevOps."""
+    credentials = f":{personal_access_token}"
+    credentials_encoded = b64encode(credentials.encode()).decode("ascii")
+    headers = {
+        "Authorization": f"Basic {credentials_encoded}",
+        "Content-Type": "application/json"
+    }
+
+    wiql_query = {
+        "query": f"Select [System.Id], [System.Title], [System.State] From WorkItems Where [System.WorkItemType] = 'User Story' And [System.TeamProject] = '{project_name}' Order By [System.Id]"
+    }
+
+    # Construct the API endpoint for user stories
+    api_url = f"{organization_url}/_apis/wit/wiql?{query_params}"
+
+    # Send the POST request with authentication
+    response = requests.post(api_url, headers=headers, json=wiql_query)
+
+    user_stories = []
+    work_item_ids = []
+
+    if response.status_code == 200:
+        work_items = response.json()
+        work_item_ids = [item['id'] for item in work_items['workItems']]
+        
+        if work_item_ids:
+            work_items_response = requests.get(
+                f'{organization_url}/_apis/wit/workitems?ids={",".join(map(str, work_item_ids))}&{query_params}',
+                headers=headers
+            )
+
+            if work_items_response.status_code == 200:
+                work_items_details = work_items_response.json()
+                for work_item in work_items_details['value']:
+                    work_item_with_title = f"ID: {work_item['id']}, Title: {work_item['fields']['System.Title']}"
+                    user_stories.append(work_item_with_title)
+            else:
+                raise HTTPException(status_code=work_items_response.status_code, detail="Error fetching work item details.")
+        else:
+            raise HTTPException(status_code=404, detail="No user stories found.")
+    else:
+        raise HTTPException(status_code=response.status_code, detail="Error executing WIQL query.")
+    return user_stories
+
+@app.get("/user-stories/{project_name}")
+async def fetch_user_stories(project_name: str):
+    """Endpoint to get user stories from Azure DevOps."""
+    try:
+        base_url = f"https://dev.azure.com/{ORG}"
+        query_params = "api-version=7.1"  # Adjust as needed
+        user_stories = get_user_stories(base_url, PAT, query_params, project_name)
+        return {"user_stories": user_stories}
+    except Exception as e:
+        print(f"Error: {str(e)}")  # Log the error for debugging
+        raise HTTPException(status_code=500, detail=str(e))
+
+def remove_html_tags(text):
+    clean = re.compile('<.*?>')
+    return re.sub(clean, '', text)
+
+async def fetch_work_item_details(work_item_id, pat, base_url, api_version):
+    headers = {
+        'Content-Type': 'application/json',
+        'Authorization': f'Basic {base64.b64encode(f":{pat}".encode()).decode()}'
+    }
+
+    url = f"{base_url}/_apis/wit/workitems/{work_item_id}?api-version={api_version}"
+    async with httpx.AsyncClient() as client:
+        response = await client.get(url, headers=headers)
+        if response.status_code != 200:
+            print(f"Error fetching work item {work_item_id}: {response.status_code} - {response.text}")
+            raise Exception(f"Error {response.status_code}: {response.text}")
+
+        return response.json()
+
+# FastAPI endpoint to fetch acceptance criteria
+
+@app.post("/acceptance-criteria")
+async def get_acceptance_criteria(criteria: CriteriaRequest):
+    descriptions = []
+    acceptance_criterias = []
+
+    for work_item_id in criteria.user_story_ids:
+        try:
+            # Fetch work item details from Azure DevOps
+            work_item_details = await fetch_work_item_details(work_item_id, criteria.pat, criteria.base_url, criteria.api_version)
+            
+            # Access the fields from the fetched work item details
+            fields = work_item_details.get('fields', {})
+            description = fields.get('System.Description', 'No description available.')
+            acceptance_criteria = fields.get('Microsoft.VSTS.Common.AcceptanceCriteria', 'No acceptance criteria available.')
+
+            descriptions.append(remove_html_tags(description))
+            acceptance_criterias.append(remove_html_tags(acceptance_criteria))
+        except Exception as e:
+            print(f"Error fetching work item {work_item_id}: {str(e)}")
+            return {"error": f"Failed to retrieve work item: {work_item_id}"}
+
+    return {"descriptions": descriptions, "acceptance_criterias": acceptance_criterias}
