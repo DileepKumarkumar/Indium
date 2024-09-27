@@ -15,8 +15,18 @@ const TestCaseGeneration = () => {
   const [loading, setLoading] = useState(false);
   const [acceptanceCriterias, setAcceptanceCriterias] = useState([]); // State for acceptance criteria
   const [error, setError] = useState(null);
-  const [descriptions, setDescriptions] = useState([]); // State for descriptions
+  const [userStoryIds, setUserStoryIds] = useState([]); // Store the IDs corresponding to the user stories
 
+  const [descriptions, setDescriptions] = useState([]); // State for descriptions
+  const [generatedTestCases, setGeneratedTestCases] = useState('');
+
+
+  const [plainText, setPlainText] = useState('');
+  const [key, setKey] = useState('');
+  const [value, setValue] = useState(0);
+  const [apiKey, setApiKey] = useState('');
+  const [temp, setTemp] = useState(0.5);
+  const [result, setResult] = useState(null);
   // Fetch projects from FastAPI
   const fetchProjects = async () => {
     setLoading(true);
@@ -91,7 +101,7 @@ const TestCaseGeneration = () => {
             },
             body: JSON.stringify({
                 user_story_ids: [selectedUserStoryId],
-                pat: 'pat_token',
+                pat: '',
                 base_url: 'https://dev.azure.com/revathyb',
                 api_version: '7.1',
             }),
@@ -130,10 +140,51 @@ const TestCaseGeneration = () => {
     };
     return levels[temp] || "Unknown";
   };
-
-  const handleCreativityChange = (change) => {
-    setCreativity(prev => Math.min(1.0, Math.max(0.0, prev + change)));
+  const handleCreativityChange = (delta) => {
+    setCreativity((prev) => Math.max(0, Math.min(1, prev + delta)));
   };
+
+ // Function to handle generating test cases
+ const handleGenerateTestCases = async () => {
+  const requestData = {
+    model: 'llama3',
+    temperature: creativity,
+    testScenario: selectedTestScenario,
+    format: selectedFormat,
+    description: descriptions[0],
+    acceptanceCriteria: acceptanceCriterias[0]
+  };
+
+  console.log(requestData);
+
+  try {
+    const response = await fetch('http://localhost:8000/generate-test-cases', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(requestData),
+    });
+
+    console.log("in post method");
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const result = await response.json();
+    console.log("Generated Test Cases:", result);
+
+    // Set the test cases to state
+    setGeneratedTestCases(result.test_cases);
+
+  } catch (error) {
+    console.error('Error generating test cases:', error);
+  }
+};
+
+
+
 
   return (
     <div className="testcase-generation">
@@ -235,8 +286,20 @@ const TestCaseGeneration = () => {
               <p>No acceptance criteria available.</p>
           )}
       </div>
+      <button onClick={handleGenerateTestCases} disabled={loading}>
+      {loading ? 'Generating...' : 'Generate Test Cases'}
+    </button>
 
-      </div>
+    <h3>Generated Test Cases:</h3>
+    {loading ? (
+      <p>Loading test cases...</p>  // Show this while the request is in progress
+    ) : generatedTestCases ? (
+      <pre>{generatedTestCases}</pre>
+    ) : (
+      <p>No test cases generated yet.</p>
+    )}
+
+        </div>
     </div>
   );
 };
