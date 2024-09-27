@@ -21,6 +21,7 @@ const TestCaseGeneration = () => {
   const [descriptions, setDescriptions] = useState([]); // State for descriptions
   const [generatedTestCases, setGeneratedTestCases] = useState("");
   const [statusMessage, setStatusMessage] = useState(""); // State to hold the status message
+  const [ollamaMessage, setOllamaMessage] = useState("");
 
   const [plainText, setPlainText] = useState("");
   const [key, setKey] = useState("");
@@ -152,15 +153,14 @@ const TestCaseGeneration = () => {
   // Function to handle generating test cases
   const handleGenerateTestCases = async () => {
     setLoading(true);
-    setStatusMessage("Triggered Ollama llama3 and waiting for the output..."); // Message when request is triggered
+    setOllamaMessage("Triggered Ollama Llama3 and waiting for the output...");
 
     const requestData = {
-      model: "llama3",
+      plain_text: descriptions[0],
+      key: selectedTestScenario,
+      value: selectedFormat,
+      selected_model: "llama3",
       temperature: creativity,
-      testScenario: selectedTestScenario,
-      format: selectedFormat,
-      description: descriptions[0],
-      acceptanceCriteria: acceptanceCriterias[0],
     };
 
     try {
@@ -181,10 +181,10 @@ const TestCaseGeneration = () => {
 
       const result = await response.json();
       setGeneratedTestCases(result.test_cases);
-      setStatusMessage("Test cases generated successfully!"); // Update message on success
+      setOllamaMessage("Test cases generated successfully.");
     } catch (error) {
       console.error("Error generating test cases:", error);
-      setStatusMessage("Error occurred while generating test cases.");
+      setOllamaMessage("Error generating test cases.");
     } finally {
       setLoading(false);
     }
@@ -315,20 +315,19 @@ const TestCaseGeneration = () => {
             <p>No acceptance criteria available.</p>
           )}
         </div>
-        <button onClick={handleGenerateTestCases} disabled={loading}>
-          {loading ? "Generating..." : "Generate Test Cases"}
-        </button>
+        <button onClick={handleGenerateTestCases}>Generate Test Cases</button>
 
-        {/* Display the status message */}
-        <h3>Status: {statusMessage}</h3>
-
-        <h3>Generated Test Cases:</h3>
         {loading ? (
-          <p>Loading test cases...</p>
-        ) : generatedTestCases ? (
-          <pre>{generatedTestCases}</pre>
+          <p>{ollamaMessage}</p>
         ) : (
-          <p>No test cases generated yet.</p>
+          <>
+            <h3>Generated Test Cases:</h3>
+            {generatedTestCases ? (
+              <pre>{generatedTestCases}</pre>
+            ) : (
+              <p>No test cases generated yet.</p>
+            )}
+          </>
         )}
       </div>
     </div>

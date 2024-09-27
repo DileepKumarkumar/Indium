@@ -11,6 +11,8 @@ from base64 import b64encode
 import json
 from fastapi import BackgroundTasks
 import httpx
+from ollama import ChatOllama
+from langchain.prompts import SystemMessage, HumanMessage
 
 
 app = FastAPI()
@@ -333,33 +335,78 @@ async def get_acceptance_criteria(criteria: CriteriaRequest):
 "-----------------------------------------------------------------------------------------------"
 
 class TestCaseRequest(BaseModel):
-    model: str
+    plain_text: str
+    key: str
+    value: str
+    selected_model: str
     temperature: float
-    testScenario: str
-    format: str
-    description: str
-    acceptanceCriteria: str
+
+def generate_testCases_ByOllama(plain_text, key, value, selected_model, temp):
+    pmpt = [
+        {"role": "system", "content": "You are an experienced Test Manager responsible for creating comprehensive and high-coverage test scenarios."},
+        {"role": "user", "content": f"Generate detailed {key} test scenarios based on the following Acceptance Criteria: " + plain_text},
+        {"role": "user", "content": f"""For each test scenario, ensure the following:
+        1. **Test Objective**: Clearly describe the purpose of the test.
+        2. **Gherkin-style Scripts**: Write Gherkin scripts (Given, When, Then) that cover these areas:
+            - **User Roles and Interactions**: Identify the user roles interacting with the system and their respective actions.
+            - **Role-Specific Actions**: Define the specific actions and behaviors expected for each role.
+            - **Validation of Expected Behaviors**: Validate normal operations and confirm successful task completion without errors.
+            - **Error and Exception Handling**: Simulate error conditions, unexpected inputs, and system failures. Ensure validation of error handling, including incorrect inputs and boundary cases.
+            - **Boundary Conditions**: Explore edge cases by testing inputs at minimum, maximum, and outside typical ranges to validate system behavior.
+            - **Usability and Performance**: Assess usability aspects, including user experience, and evaluate performance and load handling where relevant.
+        """}
+    ]
+
+    local_llm = ChatOllama(
+        model=selected_model,
+        base_url="http://localhost:11434",
+        temperature=temp
+    )
+
+    # Send the first set of prompts
+    messages = [
+        SystemMessage(content=pmpt[0]["content"]),
+        HumanMessage(content=pmpt[1]["content"]),
+        HumanMessage(content=pmpt[2]["content"])
+    ]
+    
+    # Generate Gherkin scripts
+    response = local_llm.invoke(messages)
+    zerkinScript = response.content
+
+    # Prepare the test case prompt
+    testCases_prompt = [
+        {"role": "system", "content": "You are an Experienced Test Manager."},
+        {"role": "user", "content": "write Testcases for each scenario: " + zerkinScript},
+        {"role": "user", "content": """Generate a test cases for each scenario with the format: 
+        1. Scenario Objective 
+        2. Clear Test Steps with pre-requisites 
+        3. Expected Results Template:
+        """}
+    ]
+    
+    # Send the second set of prompts to generate test cases
+    messages1 = [
+        SystemMessage(content=testCases_prompt[0]["content"]),
+        HumanMessage(content=testCases_prompt[1]["content"]),
+        HumanMessage(content=testCases_prompt[2]["content"])
+    ]
+
+    response1 = local_llm.invoke(messages1)
+    testcases = response1.content
+
+    return zerkinScript, testcases
 
 @app.post("/generate-test-cases")
 async def generate_test_cases(request: TestCaseRequest):
-    
-    if request.model != "llama3":
-        raise HTTPException(status_code=400, detail="Only llama3 model is supported.")
-    
-    # Create an instance of ChatOllama
-    local_llm = ChatOllama(model="llama3", base_url="http://localhost:11434", temperature=request.temperature)
-
-    # Prepare the conversation prompt
-    conversation = [
-        {"role": "system", "content": "You are an experienced Test Manager."},
-        {"role": "user", "content": f"Generate {request.testScenario} test cases based on the following description: {request.description} and acceptance criteria: {request.acceptanceCriteria}. Format: {request.format}."}
-    ]
-    
     try:
-        # Invoke the Llama3 model to get the response
-        response = local_llm.invoke(conversation)
+        zerkinScript, testcases = generate_testCases_ByOllama(
+            plain_text=request.plain_text,
+            key=request.key,
+            value=request.value,
+            selected_model=request.selected_model,
+            temp=request.temperature
+        )
+        return {"gherkin_script": zerkinScript, "test_cases": testcases}
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error invoking Llama3 model: {str(e)}")
-    # Return the generated test cases
-    return {"test_cases": response.content if hasattr(response, 'content') else 'No test cases generated.'}
-    
+        raise HTTPException(status_code=500, detail=str(e))
