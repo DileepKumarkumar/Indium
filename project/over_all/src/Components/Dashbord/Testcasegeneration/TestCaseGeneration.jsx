@@ -146,6 +146,8 @@ const TestCaseGeneration = () => {
 
  // Function to handle generating test cases
  const handleGenerateTestCases = async () => {
+  setLoading(true);  // Set loading to true before starting the API call
+
   const requestData = {
     model: 'llama3',
     temperature: creativity,
@@ -166,20 +168,17 @@ const TestCaseGeneration = () => {
       body: JSON.stringify(requestData),
     });
 
-    console.log("in post method");
-
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
 
     const result = await response.json();
     console.log("Generated Test Cases:", result);
-
-    // Set the test cases to state
     setGeneratedTestCases(result.test_cases);
-
   } catch (error) {
     console.error('Error generating test cases:', error);
+  } finally {
+    setLoading(false);  // Set loading to false after the API call is completed
   }
 };
 
