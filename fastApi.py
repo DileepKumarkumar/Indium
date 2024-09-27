@@ -178,7 +178,7 @@ async def query_ollama(
 
 
 "---------------------------------------------------------------------"
-PAT = "pat_token"
+PAT = ""
 ORG = "revathyb"
 API_VERSION = "api-version=7.1"
 BASE_URL = f"https://dev.azure.com/{ORG}"
@@ -326,3 +326,40 @@ async def get_acceptance_criteria(criteria: CriteriaRequest):
             return {"error": f"Failed to retrieve work item: {work_item_id}"}
 
     return {"descriptions": descriptions, "acceptance_criterias": acceptance_criterias}
+
+
+
+
+"-----------------------------------------------------------------------------------------------"
+
+class TestCaseRequest(BaseModel):
+    model: str
+    temperature: float
+    testScenario: str
+    format: str
+    description: str
+    acceptanceCriteria: str
+
+@app.post("/generate-test-cases")
+async def generate_test_cases(request: TestCaseRequest):
+    
+    if request.model != "llama3":
+        raise HTTPException(status_code=400, detail="Only llama3 model is supported.")
+    
+    # Create an instance of ChatOllama
+    local_llm = ChatOllama(model="llama3", base_url="http://localhost:11434", temperature=request.temperature)
+
+    # Prepare the conversation prompt
+    conversation = [
+        {"role": "system", "content": "You are an experienced Test Manager."},
+        {"role": "user", "content": f"Generate {request.testScenario} test cases based on the following description: {request.description} and acceptance criteria: {request.acceptanceCriteria}. Format: {request.format}."}
+    ]
+    
+    try:
+        # Invoke the Llama3 model to get the response
+        response = local_llm.invoke(conversation)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error invoking Llama3 model: {str(e)}")
+    # Return the generated test cases
+    return {"test_cases": response.get('content', 'No test cases generated.')}
+    
