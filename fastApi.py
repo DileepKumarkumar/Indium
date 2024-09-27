@@ -361,5 +361,5 @@ async def generate_test_cases(request: TestCaseRequest):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error invoking Llama3 model: {str(e)}")
     # Return the generated test cases
-    return {"test_cases": response.get('content', 'No test cases generated.')}
+    return {"test_cases": response.content if hasattr(response, 'content') else 'No test cases generated.'}
     
