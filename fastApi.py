@@ -11,8 +11,8 @@ from base64 import b64encode
 import json
 from fastapi import BackgroundTasks
 import httpx
-from ollama import ChatOllama
-from langchain.prompts import SystemMessage, HumanMessage
+from langchain_community.chat_models import ChatOllama
+from langchain.schema import HumanMessage, SystemMessage
 
 
 app = FastAPI()
@@ -354,7 +354,9 @@ def generate_testCases_ByOllama(plain_text, key, value, selected_model, temp):
             - **Error and Exception Handling**: Simulate error conditions, unexpected inputs, and system failures. Ensure validation of error handling, including incorrect inputs and boundary cases.
             - **Boundary Conditions**: Explore edge cases by testing inputs at minimum, maximum, and outside typical ranges to validate system behavior.
             - **Usability and Performance**: Assess usability aspects, including user experience, and evaluate performance and load handling where relevant.
-        """}
+        
+         Ensure that the generated {value} test scenarios provide thorough coverage, covering both positive and negative cases, edge conditions, and exceptional circumstances. Increase the scope to cover all potential interactions and system behavior validations.
+         """}
     ]
 
     local_llm = ChatOllama(
@@ -378,11 +380,25 @@ def generate_testCases_ByOllama(plain_text, key, value, selected_model, temp):
     testCases_prompt = [
         {"role": "system", "content": "You are an Experienced Test Manager."},
         {"role": "user", "content": "write Testcases for each scenario: " + zerkinScript},
-        {"role": "user", "content": """Generate a test cases for each scenario with the format: 
-        1. Scenario Objective 
-        2. Clear Test Steps with pre-requisites 
-        3. Expected Results Template:
-        """}
+        {"role": "user", "content": """Generate a test cases for each scenario with the format:  1.Scenario Objective 2.Clear Test Steps with pre-requisites 3.Expected Results Template:
+            1. Objective:
+            - State the objective of the test scenario, focusing on the specific functionality being tested.
+    
+            2. Test Steps with Pre-requisites:
+            - List the sequential steps to execute the test scenario, along with any pre-requisites necessary for the test.
+                1. Step 1: [Describe the action or input to be performed and also Specify any necessary pre-conditions if required]
+                    
+                2. Step 2: [Describe the action or input to be performed and also Specify any necessary pre-conditions if required]
+                    
+                3. Step 3: [Describe the action or input to be performed and also Specify any necessary pre-conditions if required]
+        
+                [Continue with additional steps as needed]
+    
+        3. Expected Results:
+        - Define the expected outcomes or behaviors resulting from the execution of the test steps.
+            - Expected Result 1: [Describe the expected outcome or behavior]
+            - Expected Result 2: [Describe the expected outcome or behavior]
+                [Continue with additional expected results as needed]"""}
     ]
     
     # Send the second set of prompts to generate test cases

@@ -16,19 +16,11 @@ const TestCaseGeneration = () => {
   const [loading, setLoading] = useState(false);
   const [acceptanceCriterias, setAcceptanceCriterias] = useState([]); // State for acceptance criteria
   const [error, setError] = useState(null);
-  const [userStoryIds, setUserStoryIds] = useState([]); // Store the IDs corresponding to the user stories
 
   const [descriptions, setDescriptions] = useState([]); // State for descriptions
   const [generatedTestCases, setGeneratedTestCases] = useState("");
-  const [statusMessage, setStatusMessage] = useState(""); // State to hold the status message
   const [ollamaMessage, setOllamaMessage] = useState("");
 
-  const [plainText, setPlainText] = useState("");
-  const [key, setKey] = useState("");
-  const [value, setValue] = useState(0);
-  const [apiKey, setApiKey] = useState("");
-  const [temp, setTemp] = useState(0.5);
-  const [result, setResult] = useState(null);
   // Fetch projects from FastAPI
   const fetchProjects = async () => {
     setLoading(true);
@@ -153,13 +145,13 @@ const TestCaseGeneration = () => {
   // Function to handle generating test cases
   const handleGenerateTestCases = async () => {
     setLoading(true);
-    setOllamaMessage("Triggered Ollama Llama3 and waiting for the output...");
+    setOllamaMessage("Generating test cases...");
 
     const requestData = {
       plain_text: descriptions[0],
       key: selectedTestScenario,
       value: selectedFormat,
-      selected_model: "llama3",
+      selected_model: selectedModel,
       temperature: creativity,
     };
 
@@ -183,8 +175,9 @@ const TestCaseGeneration = () => {
       setGeneratedTestCases(result.test_cases);
       setOllamaMessage("Test cases generated successfully.");
     } catch (error) {
-      console.error("Error generating test cases:", error);
       setOllamaMessage("Error generating test cases.");
+      console.error("Error generating test cases:", error);
+
     } finally {
       setLoading(false);
     }
@@ -315,20 +308,17 @@ const TestCaseGeneration = () => {
             <p>No acceptance criteria available.</p>
           )}
         </div>
-        <button onClick={handleGenerateTestCases}>Generate Test Cases</button>
+        <button onClick={handleGenerateTestCases} disabled={!descriptions.length}>Generate Test Cases</button>
 
-        {loading ? (
+
+        {/* Generated Test Cases Display */}
+        <div className="test-cases-container">
+          <h3>Generated Test Cases:</h3>
+          <p>{generatedTestCases}</p>
           <p>{ollamaMessage}</p>
-        ) : (
-          <>
-            <h3>Generated Test Cases:</h3>
-            {generatedTestCases ? (
-              <pre>{generatedTestCases}</pre>
-            ) : (
-              <p>No test cases generated yet.</p>
-            )}
-          </>
-        )}
+        </div>
+
+        {loading && <p>Loading...</p>}
       </div>
     </div>
   );
