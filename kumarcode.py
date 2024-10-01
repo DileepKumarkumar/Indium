@@ -433,21 +433,7 @@ def generate_test_cases(plain_text, api_key,key,value, temp):
    
 def generate_testCases_ByOllama(plain_text, key, value, selected_model, temp):
    
-    '''pmpt = [
-    {"role": "system", "content": "You are an Experienced Test Manager, responsible for creating comprehensive and high-coverage test scenarios."},
-    {"role": "user", "content": f"Write comprehensive {key} test scenarios for the following Acceptance Criteria: " + plain_text},
-    {"role": "user", "content": f"""Generate {value} test scenarios with:
-        1. Objective
-        2. Gherkin scripts covering the following aspects:
-            - User roles interacting with the system
-            - Role-specific actions and behaviors
-            - Validation of expected behavior under normal operating conditions
-            - Successful completion of common tasks or interactions without encountering errors
-            - Simulation of error conditions or unexpected user inputs, including validation errors, invalid inputs, or system failures, and verification of appropriate system responses
-            - Exploration of boundary conditions or limits of system functionality, including inputs at the minimum, maximum, or beyond typical ranges, and verification of correct system behavior."""
-    }
-    ]'''
- 
+
     pmpt = [
     {"role": "system", "content": "You are an experienced Test Manager responsible for creating comprehensive and high-coverage test scenarios."},
     {"role": "user", "content": f"Generate detailed {key} test scenarios based on the following Acceptance Criteria: " + plain_text},
