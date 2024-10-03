@@ -341,6 +341,64 @@ class TestCaseRequest(BaseModel):
     selected_model: str
     temperature: float
 
+
+def complete_chat(api_key, conversation, temp):
+    url = "https://api.openai.com/v1/chat/completions"
+    headers = {
+        "Content-Type": "application/json",
+        "Authorization": f"Bearer {api_key}"
+    }
+    payload = {
+        "model": "gpt-3.5-turbo",
+        "messages": conversation,
+        "temperature": temp
+    }
+    response = requests.post(url, headers=headers, json=payload)
+    if response.status_code == 200:
+        return response.json()
+    else:
+        print(f"Error: {response.status_code}")
+        print(response.text)
+        return None    
+
+ 
+ 
+def generate_test_cases_openai(plain_text, api_key, key, value, temp):
+    conversation_example = [
+        {"role": "system", "content": "You are an Experienced Test Manager."},
+        {"role": "user", "content": f"Write comprehensive {key} test scenarios for the following Acceptance Criteria: " + plain_text},
+        {"role": "user", "content": f"""Generate {value} test scenarios with:
+            1. Objective
+            2. Gherkin scripts covering the following aspects:
+                - User roles interacting with the system
+                - Role-specific actions and behaviors
+                - Validation of expected behavior under normal operating conditions
+                - Successful completion of common tasks or interactions without encountering errors
+                - Simulation of error conditions or unexpected user inputs, including validation errors, invalid inputs, or system failures, and verification of appropriate system responses
+                - Exploration of boundary conditions or limits of system functionality, including inputs at the minimum, maximum, or beyond typical ranges, and verification of correct system behavior."""}
+    ]
+    response = complete_chat(api_key, conversation_example, temp)
+    if response:
+        airecommendation = response['choices'][0]['message']['content']
+
+        print(airecommendation)
+
+        conversation_testcase = [
+            {"role": "system", "content": "You are an Experienced Test Manager."},
+            {"role": "user", "content": "Write test cases for each scenario: " + airecommendation},
+            {"role": "user", "content": """Generate test cases for each scenario with the format: 
+            1. Scenario Objective 
+            2. Clear Test Steps with pre-requisites 
+            3. Expected Results"""}
+        ]
+        response = complete_chat(api_key, conversation_testcase, temp)
+        if response:
+            testcases = response['choices'][0]['message']['content']
+            return airecommendation, testcases
+    return None, None
+
+
+
 def generate_testCases_ByOllama(plain_text, key, value, selected_model, temp):
     pmpt = [
         {"role": "system", "content": "You are an experienced Test Manager responsible for creating comprehensive and high-coverage test scenarios."},
@@ -416,13 +474,30 @@ def generate_testCases_ByOllama(plain_text, key, value, selected_model, temp):
 @app.post("/generate-test-cases")
 async def generate_test_cases(request: TestCaseRequest):
     try:
-        zerkinScript, testcases = generate_testCases_ByOllama(
-            plain_text=request.plain_text,
-            key=request.key,
-            value=request.value,
-            selected_model=request.selected_model,
-            temp=request.temperature
-        )
-        return {"gherkin_script": zerkinScript, "test_cases": testcases}
+        if request.selected_model.lower() == "openai":
+            # OpenAI implementation
+            api_key = "your_openai_api_key_here"  # Ensure you set your OpenAI API key
+            gherkin_script, testcases = generate_test_cases_openai(
+                plain_text=request.plain_text,
+                api_key=api_key,
+                key=request.key,
+                value=request.value,
+                temp=request.temperature
+            )
+        else:
+            # Ollama implementation
+            gherkin_script, testcases = generate_testCases_ByOllama(
+                plain_text=request.plain_text,
+                key=request.key,
+                value=request.value,
+                selected_model=request.selected_model,
+                temp=request.temperature
+            )
+        
+        if gherkin_script and testcases:
+            return {"gherkin_script": gherkin_script, "test_cases": testcases}
+        else:
+            raise HTTPException(status_code=500, detail="Failed to generate test cases.")
+    
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=f"Error: {str(e)}")
