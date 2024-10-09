@@ -1,0 +1,20 @@
+.dashboard-container {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    height: 100vh; /* Full height of the viewport */
+    text-align: center;
+  }
+  
+  .logo {
+    width: 150px; /* Adjust the width of the logo */
+    height: auto;  /* Keep the aspect ratio of the logo */
+    margin-bottom: 20px; /* Space between logo and text */
+  }
+  
+  p {
+    font-size: 18px;
+    color: #333;
+  }
+  
