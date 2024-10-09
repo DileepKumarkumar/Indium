@@ -143,185 +143,199 @@ const TestCaseGeneration = () => {
   };
 
   // Function to handle generating test cases
-  const handleGenerateTestCases = async () => {
-    setLoading(true);
-    setOllamaMessage("Generating test cases...");
-
-    const requestData = {
-      plain_text: descriptions[0],
-      key: selectedTestScenario,
-      value: selectedFormat,
-      selected_model: selectedModel,
-      temperature: creativity,
-    };
-
-    try {
-      const response = await fetch(
-        "http://localhost:8000/generate-test-cases",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(requestData),
+    const handleGenerateTestCases = async () => {
+      setLoading(true);
+      setOllamaMessage("Generating test cases...");
+  
+      const requestData = {
+        plain_text: descriptions[0],
+        key: selectedTestScenario,
+        value: selectedFormat,
+        selected_model: selectedModel,
+        temperature: creativity,
+      };
+  
+      try {
+        const response = await fetch(
+          "http://localhost:8000/generate-test-cases",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(requestData),
+          }
+        );
+  
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
         }
-      );
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+  
+        const result = await response.json();
+        setGeneratedTestCases(result.test_cases);
+        setOllamaMessage("Test cases generated successfully.");
+      } catch (error) {
+        setOllamaMessage("Error generating test cases.");
+        console.error("Error generating test cases:", error);
+      } finally {
+        setLoading(false);
       }
-
-      const result = await response.json();
-      setGeneratedTestCases(result.test_cases);
-      setOllamaMessage("Test cases generated successfully.");
-    } catch (error) {
-      setOllamaMessage("Error generating test cases.");
-      console.error("Error generating test cases:", error);
-
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  return (
-    <div className="testcase-generation">
-      {loading && <p>Loading...</p>}
-      {error && <p className="error">{error}</p>}
-      <div className="sidebar">
-        <p>Select The Organization:</p>
-        <select
-          value={selectedOrganization}
-          onChange={(e) => setSelectedOrganization(e.target.value)}
-        >
-          <option value="revathyb">revathyb</option>
-        </select>
-
-        <p>API Version:</p>
-        <select
-          value={selectedApiVersion}
-          onChange={(e) => setSelectedApiVersion(e.target.value)}
-        >
-          <option value="7.1">api-version=7.1</option>
-        </select>
-
-        <p>Project Name:</p>
-        <select
-          value={selectedProjectName}
-          onChange={(e) => setSelectedProjectName(e.target.value)}
-        >
-          {projects.map((project) => (
-            <option key={project} value={project}>
-              {project}
-            </option>
+    };
+  
+    const formattedResponse = (response) => {
+      return response.split('\n\n').map((paragraph, index) => (
+        <div key={index}>
+          {paragraph.split('\n').map((line, lineIndex) => (
+            <p key={lineIndex}>{line}</p>
           ))}
-        </select>
-
-        <p>Select the User Story:</p>
-        <select
-          value={selectedUserStory}
-          onChange={(e) => setSelectedUserStory(e.target.value)} // Update selected user story
-          disabled={loading || userStories.length === 0} // Disable if loading or no stories
-        >
-          <option value="">--Select a User Story--</option>
-          {userStories.length > 0 ? (
-            userStories.map((story, index) => {
-              const storyId = story.split(", ")[0].split(": ")[1]; // Extract ID from the story string
-              return (
-                <option key={index} value={storyId}>
-                  {story}
-                </option> // Use the ID as the value
-              );
-            })
-          ) : (
-            <option value="">No user stories available</option>
-          )}
-        </select>
-
-        <p>Select the Model:</p>
-        <select
-          value={selectedModel}
-          onChange={(e) => setSelectedModel(e.target.value)}
-        >
-          <option value="OpenAI">OpenAI</option>
-          <option value="llama3">llama3</option>
-          <option value="misteral">misteral</option>
-        </select>
-
-        {/* Creativity Adjustment */}
-        <p>Select The Creativity:</p>
-        <div className="creativity-adjust">
-          <button onClick={() => handleCreativityChange(-0.01)}>-</button>
-          <span className="creativity-value">{creativity.toFixed(2)}</span>
-          <button onClick={() => handleCreativityChange(0.01)}>+</button>
         </div>
-        <p>Creativity Level: {getCreativityLevel(creativity)}</p>
-
-        <p>Select the Test Scenarios:</p>
-        <select
-          value={selectedTestScenario}
-          onChange={(e) => setSelectedTestScenario(e.target.value)}
-        >
-          <option value="Functional">Functional</option>
-          <option value="Exploratory">Exploratory</option>
-          <option value="Performance">Performance</option>
-          <option value="Security">Security</option>
-        </select>
-
-        <p>Select the Format for Update:</p>
-        <select
-          value={selectedFormat}
-          onChange={(e) => setSelectedFormat(e.target.value)}
-        >
-          <option value="Gherkin Format">Gherkin Format</option>
-          <option value="Text Format">Text Format</option>
-        </select>
-      </div>
-
-      <div className="content">
-        <button
-          onClick={() => fetchAcceptanceCriteria(selectedUserStory)}
-          disabled={!selectedUserStory || loading}
-        >
-          Fetch Acceptance Criteria
-        </button>
-
-        {/* Render acceptance criteria and descriptions */}
-        <div className="output">
-          {descriptions.length > 0 && (
-            <div>
-              <h3>Description:</h3>
-              {descriptions.map((description, index) => (
-                <p key={index}>{decodeHtml(description)}</p> // Decode before rendering
-              ))}
-            </div>
-          )}
-          {acceptanceCriterias.length > 0 ? (
-            <div>
-              <h3>Acceptance Criteria:</h3>
-              <ul>
-                {acceptanceCriterias.map((criteria, index) => (
-                  <li key={index}>{decodeHtml(criteria)}</li> // Decode before rendering
-                ))}
-              </ul>
-            </div>
-          ) : (
-            <p>No acceptance criteria available.</p>
-          )}
-        </div>
-        <button onClick={handleGenerateTestCases} disabled={!descriptions.length}>Generate Test Cases</button>
-
-
-        {/* Generated Test Cases Display */}
-        <div className="test-cases-container">
-          <h3>Generated Test Cases:</h3>
-          <p>{generatedTestCases}</p>
-          <p>{ollamaMessage}</p>
-        </div>
-
+      ));
+    };
+  
+    return (
+      <div className="testcase-generation">
         {loading && <p>Loading...</p>}
+        {error && <p className="error">{error}</p>}
+        <div className="sidebar">
+          {/* Sidebar for selections */}
+          <p>Select The Organization:</p>
+          <select
+            value={selectedOrganization}
+            onChange={(e) => setSelectedOrganization(e.target.value)}
+          >
+            <option value="revathyb">revathyb</option>
+          </select>
+  
+          {/* API Version Selection */}
+          <p>API Version:</p>
+          <select
+            value={selectedApiVersion}
+            onChange={(e) => setSelectedApiVersion(e.target.value)}
+          >
+            <option value="7.1">api-version=7.1</option>
+          </select>
+  
+          {/* Project and User Story Selections */}
+          <p>Project Name:</p>
+          <select
+            value={selectedProjectName}
+            onChange={(e) => setSelectedProjectName(e.target.value)}
+          >
+            {projects.map((project) => (
+              <option key={project} value={project}>
+                {project}
+              </option>
+            ))}
+          </select>
+  
+          <p>Select the User Story:</p>
+          <select
+            value={selectedUserStory}
+            onChange={(e) => setSelectedUserStory(e.target.value)}
+            disabled={loading || userStories.length === 0}
+          >
+            <option value="">--Select a User Story--</option>
+            {userStories.length > 0 ? (
+              userStories.map((story, index) => {
+                const storyId = story.split(", ")[0].split(": ")[1];
+                return (
+                  <option key={index} value={storyId}>
+                    {story}
+                  </option>
+                );
+              })
+            ) : (
+              <option value="">No user stories available</option>
+            )}
+          </select>
+  
+          {/* Model, Creativity, Test Scenario, and Format Selections */}
+          <p>Select the Model:</p>
+          <select
+            value={selectedModel}
+            onChange={(e) => setSelectedModel(e.target.value)}
+          >
+            <option value="OpenAI">OpenAI</option>
+            <option value="llama3">llama3</option>
+            <option value="misteral">misteral</option>
+          </select>
+  
+          <p>Select The Creativity:</p>
+          <div className="creativity-adjust">
+            <button onClick={() => handleCreativityChange(-0.01)}>-</button>
+            <span className="creativity-value">{creativity.toFixed(2)}</span>
+            <button onClick={() => handleCreativityChange(0.01)}>+</button>
+          </div>
+          <p>Creativity Level: {getCreativityLevel(creativity)}</p>
+  
+          <p>Select the Test Scenarios:</p>
+          <select
+            value={selectedTestScenario}
+            onChange={(e) => setSelectedTestScenario(e.target.value)}
+          >
+            <option value="Functional">Functional</option>
+            <option value="Exploratory">Exploratory</option>
+            <option value="Performance">Performance</option>
+            <option value="Security">Security</option>
+          </select>
+  
+          <p>Select the Format for Update:</p>
+          <select
+            value={selectedFormat}
+            onChange={(e) => setSelectedFormat(e.target.value)}
+          >
+            <option value="Gherkin Format">Gherkin Format</option>
+            <option value="Text Format">Text Format</option>
+          </select>
+        </div>
+  
+        <div className="content">
+          <button
+            onClick={() => fetchAcceptanceCriteria(selectedUserStory)}
+            disabled={!selectedUserStory || loading}
+          >
+            Fetch Acceptance Criteria
+          </button>
+  
+          {/* Render Acceptance Criteria and Descriptions */}
+          <div className="output">
+            {descriptions.length > 0 && (
+              <div>
+                <h3>Description:</h3>
+                {descriptions.map((description, index) => (
+                  <p key={index}>{decodeHtml(description)}</p>
+                ))}
+              </div>
+            )}
+            {acceptanceCriterias.length > 0 ? (
+              <div>
+                <h3>Acceptance Criteria:</h3>
+                <ul>
+                  {acceptanceCriterias.map((criteria, index) => (
+                    <li key={index}>{decodeHtml(criteria)}</li>
+                  ))}
+                </ul>
+              </div>
+            ) : (
+              <p>No acceptance criteria available.</p>
+            )}
+          </div>
+  
+          <button onClick={handleGenerateTestCases} disabled={!descriptions.length}>
+            Generate Test Cases
+          </button>
+  
+          {/* Render Generated Test Cases */}
+          <div className="test-cases-container">
+            <h3>Generated Test Cases:</h3>
+            {generatedTestCases ? formattedResponse(generatedTestCases) : <p>No test cases generated yet.</p>}
+            <p>{ollamaMessage}</p>
+          </div>
+  
+          {loading && <p>Loading...</p>}
+        </div>
       </div>
-    </div>
-  );
-};
-
+    );
+  };
+  
 export default TestCaseGeneration;
