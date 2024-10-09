@@ -32,3 +32,18 @@
     color: #007bff; /* Adjust the color on hover */
   }
   
+
+  .submenu {
+    margin-left: 20px;
+  }
+  
+  .sidebarLink {
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+  }
+  
+  .sidebarLink:hover {
+    color: #007bff; /* Add some hover effect */
+  }
+  
