@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
 import "./TestCaseGeneration.css"; // Ensure you have the CSS file
-
 const TestCaseGeneration = () => {
   const [selectedOrganization, setSelectedOrganization] = useState("revathyb");
   const [selectedApiVersion, setSelectedApiVersion] = useState("7.1");
@@ -15,12 +14,10 @@ const TestCaseGeneration = () => {
   const [selectedFormat, setSelectedFormat] = useState("Gherkin Format");
   const [loading, setLoading] = useState(false);
   const [acceptanceCriterias, setAcceptanceCriterias] = useState([]); // State for acceptance criteria
-  const [error, setError] = useState(null);
-
+  const [error, setError] = useState(null); 
   const [descriptions, setDescriptions] = useState([]); // State for descriptions
   const [generatedTestCases, setGeneratedTestCases] = useState("");
   const [ollamaMessage, setOllamaMessage] = useState("");
-
   // Fetch projects from FastAPI
   const fetchProjects = async () => {
     setLoading(true);
@@ -41,7 +38,6 @@ const TestCaseGeneration = () => {
   useEffect(() => {
     fetchProjects();
   }, []);
-
   // Fetch user stories whenever the selected project name changes
   useEffect(() => {
     if (selectedProjectName) {
@@ -61,7 +57,6 @@ const TestCaseGeneration = () => {
       }
       const data = await response.json();
       console.log("Fetched User Stories:", data.user_stories);
-
       const ids = extractWorkItemIds(data.user_stories); // Extract the IDs from stories
       console.log("Extracted Work Item IDs:", ids);
 
@@ -70,8 +65,7 @@ const TestCaseGeneration = () => {
     } catch (error) {
       setError(error.message);
     }
-  };
-
+  }
   // Function to extract work item IDs from user stories
   const extractWorkItemIds = (stories) => {
     return stories.map((story) => {
@@ -86,7 +80,7 @@ const TestCaseGeneration = () => {
     txt.innerHTML = html;
     return txt.value;
   };
-
+ 
   // Fetch acceptance criteria and description for the selected user story
   const fetchAcceptanceCriteria = async (selectedUserStoryId) => {
     try {
@@ -105,14 +99,14 @@ const TestCaseGeneration = () => {
           }),
         }
       );
-
+ 
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
       const data = await response.json();
       console.log("Fetched acceptance criteria:", data);
-
+ 
       // Update state with the fetched data
       setAcceptanceCriterias(data.acceptance_criterias || []); // Set acceptance criteria
       setDescriptions(data.descriptions || []); // Set descriptions
@@ -141,7 +135,7 @@ const TestCaseGeneration = () => {
   const handleCreativityChange = (delta) => {
     setCreativity((prev) => Math.max(0, Math.min(1, prev + delta)));
   };
-
+ 
   // Function to handle generating test cases
     const handleGenerateTestCases = async () => {
       setLoading(true);
@@ -154,7 +148,7 @@ const TestCaseGeneration = () => {
         selected_model: selectedModel,
         temperature: creativity,
       };
-  
+ 
       try {
         const response = await fetch(
           "http://localhost:8000/generate-test-cases",
@@ -170,7 +164,7 @@ const TestCaseGeneration = () => {
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
-  
+ 
         const result = await response.json();
         setGeneratedTestCases(result.test_cases);
         setOllamaMessage("Test cases generated successfully.");
@@ -191,7 +185,7 @@ const TestCaseGeneration = () => {
         </div>
       ));
     };
-  
+ 
     return (
       <div className="testcase-generation">
         {loading && <p>Loading...</p>}
@@ -214,7 +208,7 @@ const TestCaseGeneration = () => {
           >
             <option value="7.1">api-version=7.1</option>
           </select>
-  
+ 
           {/* Project and User Story Selections */}
           <p>Project Name:</p>
           <select
@@ -248,7 +242,7 @@ const TestCaseGeneration = () => {
               <option value="">No user stories available</option>
             )}
           </select>
-  
+ 
           {/* Model, Creativity, Test Scenario, and Format Selections */}
           <p>Select the Model:</p>
           <select
@@ -267,7 +261,7 @@ const TestCaseGeneration = () => {
             <button onClick={() => handleCreativityChange(0.01)}>+</button>
           </div>
           <p>Creativity Level: {getCreativityLevel(creativity)}</p>
-  
+ 
           <p>Select the Test Scenarios:</p>
           <select
             value={selectedTestScenario}
@@ -288,7 +282,7 @@ const TestCaseGeneration = () => {
             <option value="Text Format">Text Format</option>
           </select>
         </div>
-  
+ 
         <div className="content">
           <button
             onClick={() => fetchAcceptanceCriteria(selectedUserStory)}
@@ -320,7 +314,7 @@ const TestCaseGeneration = () => {
               <p>No acceptance criteria available.</p>
             )}
           </div>
-  
+ 
           <button onClick={handleGenerateTestCases} disabled={!descriptions.length}>
             Generate Test Cases
           </button>
@@ -331,7 +325,7 @@ const TestCaseGeneration = () => {
             {generatedTestCases ? formattedResponse(generatedTestCases) : <p>No test cases generated yet.</p>}
             <p>{ollamaMessage}</p>
           </div>
-  
+ 
           {loading && <p>Loading...</p>}
         </div>
       </div>
