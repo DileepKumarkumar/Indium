@@ -32,12 +32,14 @@ def load_descriptions():
 
 def clean_step(step_description):
     """Cleans the step description by removing special characters, step prefixes, etc."""
+    # Remove "step" prefixes like "Step 1:", "step2:" (case-insensitive)
     cleaned_step = re.sub(r"step\s*\d+:?", "", step_description, flags=re.IGNORECASE).strip()
-    # Remove unnecessary spaces and capitalize words for a concise format
+    # Remove all numbers and special characters except spaces
+    cleaned_step = re.sub(r"[^A-Za-z\s]", "", cleaned_step)
+    # Remove extra spaces
     cleaned_step = re.sub(r"\s+", "", cleaned_step).strip()
-    # Ensure no leading or trailing colons remain
-    cleaned_step = cleaned_step.lstrip(":").strip()
     return cleaned_step
+
 
 def build_sparse_index(extracted_data):
     """Build a sparse index (TF-IDF) from the function descriptions."""
@@ -104,29 +106,60 @@ def hybrid_search(query_text, extracted_data, k=5, alpha=0.5):
             })
     return results
 
-# Extract steps from the user input
-def extract_steps(description):
-    steps = []
+def validate_input(description):
+    """Validate the user input to check if it follows the 'goal' and 'step' format."""
     lines = description.split("\n")
+    goal_found = False
+    steps_valid = True
+    step_number = 1
+    
+    for line in lines:
+        line = line.strip()
+        
+        if line.lower().startswith("goal:"):
+            goal_found = True
+        elif line.lower().startswith(f"step {step_number}:"):
+            step_number += 1
+        else:
+            steps_valid = False
+            break
+    
+    if not goal_found:
+        return "Error: Goal is missing or incorrectly formatted."
+    elif not steps_valid:
+        return "Error: Steps are not in the correct order or are missing descriptions."
+    else:
+        return "Input format is correct!"
+
+def extract_steps(description):
+    """Extract goal and steps from the provided description."""
+    steps = []
+    goal = ""
+    lines = description.split("\n")
+
+    # First, extract the goal (line containing 'goal:')
     for i, line in enumerate(lines):
-        if line.strip():
+        if line.lower().startswith("goal"):
+            goal = line.strip()  # Extract the goal description
+        elif line.strip().startswith("step"):
             steps.append({
-                "step": f"Step {i+1}",
+                "step": f"Step {i+0}",
                 "description": line.strip()
             })
-    return steps
 
+    # Returning the goal and steps
+    return {"goal": goal, "steps": steps}
 
 def process_steps_and_search(description, extracted_data, k=1, alpha=0.5):
     """Process each step from the description and perform a hybrid search for the most relevant function."""
-    steps = extract_steps(description)
+    steps = extract_steps(description)["steps"]  # Extract steps from the description
 
     step_results = []
     for step in steps:
         step_description = step["description"]
         cleaned_description = clean_step(step_description)
 
-        # Perform hybrid search
+        # Perform hybrid search (assuming this function is implemented elsewhere)
         relevant_functions = hybrid_search(cleaned_description, extracted_data, k=k, alpha=alpha)
 
         # Store the top result for the step
@@ -134,20 +167,19 @@ def process_steps_and_search(description, extracted_data, k=1, alpha=0.5):
             top_function = relevant_functions[0]  # Top-1 relevant function
             step_results.append({
                 "step": step["step"],
-                "description": step_description,
-                "cleaned_description": cleaned_description,  # Include cleaned description
+                # "description": step_description,
+                # "cleaned_description": cleaned_description,  # Include cleaned description
                 "top_function": top_function
             })
         else:
             step_results.append({
                 "step": step["step"],
-                "description": step_description,
-                "cleaned_description": cleaned_description,  # Include cleaned description
+                # "description": step_description,
+                # "cleaned_description": cleaned_description,  # Include cleaned description
                 "top_function": None
             })
 
     return step_results
-
 
 def format_step_results(step_results):
     """Format the step results for display."""
@@ -155,25 +187,23 @@ def format_step_results(step_results):
     for step in step_results:
         step_info = (
             f"{step['step']}:\n"
-            f"Original Description: {step['description']}\n"
-            f"Cleaned Description: {step['cleaned_description']}\n"  # Add cleaned description
+            # f"Original Description: {step['description']}\n"
+            # f"Cleaned Description: {step['cleaned_description']}\n"  # Add cleaned description
         )
         if step["top_function"]:
             function = step["top_function"]
             step_info += (
-                f"Top Function:\n"
+                # f"Top Function:\n"
                 f"  Class Name: {function['class_name']}\n"
                 f"  Function Name: {function['function_name']}\n"
                 f"  Input: {function['input']}\n"
                 f"  Output: {function['output']}\n"
-                f"  Score: {function['score']:.4f}\n"
+                # f"  Score: {function['score']:.4f}\n"
             )
         else:
             step_info += "Top Function: None\n"
         formatted_output.append(step_info)
     return "\n".join(formatted_output)
-
-
 
 # Function to dynamically initialize the selected model
 def initialize_model(model_choice):
@@ -311,8 +341,25 @@ def main():
     if "custom_prompt" not in st.session_state:
         st.session_state.custom_prompt = None
 
+    # Validate input format
+    # if st.button("Validate Input Format"):
+    #     validation_feedback = validate_input(user_query)
+    #     if validation_feedback == "Input format is correct!":
+    #         st.success("Input format is valid. You can proceed to fetch relevant functions.")
+    #     else:
+    #         st.error(f"Invalid Input Format: {validation_feedback}")
+    #         return  # Exit the flow if input format is incorrect
+
     # Step 1: Fetch relevant functions
     if st.button("Get Relevant Functions"):
+        # Ensure the input format is valid before proceeding
+        validation_feedback = validate_input(user_query)
+        if validation_feedback == "Input format is correct!":
+            st.success("Input format is valid. You can proceed to fetch relevant functions.")
+        else:
+            st.error(f"Invalid Input Format: {validation_feedback}")
+            return  # Exit the flow if input format is incorrect
+
         extracted_data = load_descriptions()
         if not extracted_data:
             st.error("Failed to load extracted data.")
@@ -394,7 +441,6 @@ def main():
             """
         st.session_state.custom_prompt = default_prompt
 
-        # Ensure step_results are displayed even after clicking "Generate Code"
     if st.session_state.step_results:
         st.subheader("Relevant Functions:")
         st.text(format_step_results(st.session_state.step_results))
@@ -438,150 +484,3 @@ def main():
 # Run the application
 if __name__ == "__main__":
     main()
-
-
-# # Main Streamlit application
-# def main():
-#     st.title("Test Code Generation System")
-
-#     # Model selection dropdown
-#     model_choice = st.selectbox(
-#         "Choose a Model for Code Generation:",
-#         options=["DeepSeek", "Codex", "LLaMA 3", "LLaMA 3.1", "OpenAI"]
-#     )
-
-#     # Text input for user query
-#     user_query = st.text_area("Enter your scenario description:")
-#    # Variables to manage visibility
-#     session_state = st.session_state
-#     if "step_results" not in session_state:
-#         session_state.step_results = None
-#     if "custom_prompt" not in session_state:
-#         session_state.custom_prompt = None
-
-#     # Step 3: Fetch relevant functions
-#     if st.button("Get Relevant Functions"):
-#         # Load descriptions or relevant data
-#         extracted_data = load_descriptions()
-#         if not extracted_data:
-#             st.error("Failed to load extracted data.")
-#             return
-
-#         # Retrieve relevant functions
-#         session_state.step_results = process_steps_and_search(user_query, extracted_data)
-#         if not session_state.step_results:
-#             st.error("No relevant functions found.")
-#             return
-
-#         st.subheader("Relevant Functions:")
-#         st.text(format_step_results(session_state.step_results))
-
-#         # Display the generated prompt for review
-#         st.subheader("Generated Prompt:")
-#         # Initialize the custom prompt in session state if not already set
-#         if "custom_prompt" not in st.session_state:
-#             st.session_state.custom_prompt =f"""
-#             ### Instructions to Model:
-#             **Instructions**: Generate Java code that precisely implements each step from the 
-#             **Current Scenario** using only the **Relevant Functions** provided. Follow the 
-#             **Java Code Template** below, with accurate imports, object initialization, 
-#             and test data retrieval. Ensure that each function call strictly matches its 
-#             required parameters from the relevant functions, avoiding any extra comments, 
-#             explanations, or placeholders.
-
-#             ### Current Scenario:
-
-#             {user_query}
-
-#             ### Relevant Functions:
-#             - **Function Details**: Each function includes its class name, function name, 
-#             required input parameters, and expected output.
-#             - **Class and Function Information**:
-#             {format_step_results(session_state.step_results)}
-
-
-#             ### Java Code Template:
-
-#                 ```java
-#                 // **Imports**
-#                 // Import necessary classes based on the functions used in the scenario
-#                 import baseClass.BaseClass;
-#                 import iSAFE.ApplicationKeywords;
-#                 {{Dynamically include imports based on the function class names provided}}
-
-#                 public class TC_{{TestClassName}} extends ApplicationKeywords {{
-#                     BaseClass obj;
-#                     // Page object declarations based on relevant functions used
-#                     {{Dynamic Page Objects Initialization}}
-
-
-#                     public TC_{{TestClassName}}(BaseClass obj) {{
-#                         super(obj);
-#                         this.obj = obj;
-#                     }}
-
-#                     public void runScenario() {{
-#                         try {{
-#                             // Initialize page objects for each class used in the relevant functions
-#                             {{Dynamic Page Objects Assignment}}
-#                             {{Dynamic class initialization}}
-
-#                             // Retrieve test data for each parameter from the data source {{using retrive function}}
-#                             {{Dynamic Test Data Retrieval}}
-
-#                             // Execute steps as outlined in the Current Scenario:
-#                             {{Dynamic Scenario Implementation using}}
-
-#                         }} catch (Exception e) {{
-#                             e.printStackTrace();
-#                         }}
-#                         finally {{
-#                             print("pages")
-#                         }}
-#                     }}
-#                 }}
-#                 ```
-
-#                 ### Important note for code generation:
-#                 - The code generation should implement all the steps mentioned in the current scenario.
-#             """
-#            # Add a checkbox for toggling full-screen mode
-#             full_screen = st.checkbox("View Prompt in Full-Screen Mode")
-
-#             # Set the height based on the checkbox state
-#             text_area_height = 600 if full_screen else 200
-
-#             # Display the text area with persistent content
-#             st.text_area(
-#                 "Generated Prompt (editable):",
-#                 st.session_state.custom_prompt,
-#                 key="custom_prompt",
-#                 height=text_area_height
-#             )
-#         # Step 4: Generate code only if functions are available
-#         if session_state.step_results:
-#             st.subheader("Ready to Generate Code")
-
-#             if st.button("Generate Code"):
-#                 st.info("Processing...")
-#                 local_llm = initialize_model(model_choice)
-#                 if not local_llm:
-#                     return
-
-#                 # Use the custom prompt or fallback to the default
-#                 custom_prompt = session_state.get("custom_prompt", None)
-#                 test_code, prompt_used = generate_test_code_with_selected_model(
-#                     local_llm, user_query, session_state.step_results, custom_prompt
-#                 )
-
-#                 # Display the generated code
-#                 st.subheader("Generated Test Code:")
-#                 st.code(test_code, language="java")
-
-#                 # Display the prompt used for generation
-#                 st.subheader("Prompt Used for Code Generation:")
-#                 st.text(prompt_used)
-
-# # Run the application
-# if __name__ == "__main__":
-#     main()
