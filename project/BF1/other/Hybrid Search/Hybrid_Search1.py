@@ -187,21 +187,34 @@ def initialize_model(model_choice):
         return OpenAIChat(api_key="your_openai_api_key", model="code-davinci-002")
     elif model_choice == "LLaMA 3":
         return ChatOllama(
-            model="llama-3:13b",
+            model="lllama3:latest",
             base_url="http://localhost:11434",
             temperature=0.5
         )
     elif model_choice == "LLaMA 3.1":
         return ChatOllama(
-            model="llama-3.1:13b",
+            model="llama3.1:latest",
             base_url="http://localhost:11434",
             temperature=0.5
         )
     elif model_choice == "OpenAI":
         return OpenAIChat(api_key="your_openai_api_key", model="gpt-4")
+    elif model_choice == "codestral:latest":
+        return ChatOllama(
+            model="codestral:latest",
+            base_url="http://localhost:11434",
+            temperature=0.5
+        )
+    elif model_choice == "codellama:latest":
+        return ChatOllama(
+            model="codellama:latest",
+            base_url="http://localhost:11434",
+            temperature=0.5
+        )
     else:
         st.error("Invalid model selection.")
         return None
+
 # Function to generate test code using the selected model
 def generate_test_code_with_selected_model(local_llm, user_query, step_results, custom_prompt=None):
     formatted_functions = format_step_results(step_results)
@@ -279,8 +292,6 @@ def generate_test_code_with_selected_model(local_llm, user_query, step_results, 
 
 
 
-
-
 # Main Streamlit application
 def main():
     st.title("Test Code Generation System")
@@ -288,40 +299,35 @@ def main():
     # Model selection dropdown
     model_choice = st.selectbox(
         "Choose a Model for Code Generation:",
-        options=["DeepSeek", "Codex", "LLaMA 3", "LLaMA 3.1", "OpenAI"]
+        options=["DeepSeek", "Codex", "LLaMA 3", "LLaMA 3.1", "OpenAI", "codestral:latest", "codellama:latest"]
     )
 
     # Text input for user query
     user_query = st.text_area("Enter your scenario description:")
-   # Variables to manage visibility
-    session_state = st.session_state
-    if "step_results" not in session_state:
-        session_state.step_results = None
-    if "custom_prompt" not in session_state:
-        session_state.custom_prompt = None
 
-    # Step 3: Fetch relevant functions
+    # Initialize session state variables
+    if "step_results" not in st.session_state:
+        st.session_state.step_results = None
+    if "custom_prompt" not in st.session_state:
+        st.session_state.custom_prompt = None
+
+    # Step 1: Fetch relevant functions
     if st.button("Get Relevant Functions"):
-        # Load descriptions or relevant data
         extracted_data = load_descriptions()
         if not extracted_data:
             st.error("Failed to load extracted data.")
             return
 
-        # Retrieve relevant functions
-        session_state.step_results = process_steps_and_search(user_query, extracted_data)
-        if not session_state.step_results:
+        step_results = process_steps_and_search(user_query, extracted_data)
+        if not step_results:
             st.error("No relevant functions found.")
             return
 
-        st.subheader("Relevant Functions:")
-        st.text(format_step_results(session_state.step_results))
+        st.session_state.step_results = step_results
+        format_step_results(step_results)
 
-        # Display the generated prompt for review
-        st.subheader("Generated Prompt:")
-        if "custom_prompt" not in st.session_state or not st.session_state.custom_prompt:
-            # Initialize the custom prompt with the default prompt if not already set
-            st.session_state.custom_prompt = f"""
+        # Generate the default prompt
+        default_prompt = f"""
             ### Instructions to Model:
             **Instructions**: Generate Java code that precisely implements each step from the 
             **Current Scenario** using only the **Relevant Functions** provided. Follow the 
@@ -338,7 +344,7 @@ def main():
             - **Function Details**: Each function includes its class name, function name, 
             required input parameters, and expected output.
             - **Class and Function Information**:
-            {format_step_results(session_state.step_results)}
+            {format_step_results(step_results)}
 
 
             ### Java Code Template:
@@ -386,39 +392,196 @@ def main():
                 ### Important note for code generation:
                 - The code generation should implement all the steps mentioned in the current scenario.
             """
-            # Add a checkbox to toggle full-screen mode
-            full_screen = st.checkbox("View Prompt in Full-Screen Mode")
+        st.session_state.custom_prompt = default_prompt
 
-            if full_screen:
-                # Display the prompt in a larger text area
-                st.text_area("Generated Prompt (Full Screen):", st.session_state.custom_prompt, key="custom_prompt", height=600)
-            else:
-                # Display the prompt in a smaller text area with adjustable height
-                st.text_area("Generated Prompt (editable):", st.session_state.custom_prompt, key="custom_prompt", height=200)
-        # Step 4: Generate code only if functions are available
-        if session_state.step_results:
-            st.subheader("Ready to Generate Code")
+        # Ensure step_results are displayed even after clicking "Generate Code"
+    if st.session_state.step_results:
+        st.subheader("Relevant Functions:")
+        st.text(format_step_results(st.session_state.step_results))
 
-            if st.button("Generate Code"):
-                st.info("Processing...")
-                local_llm = initialize_model(model_choice)
-                if not local_llm:
-                    return
+    # Step 2: Display editable prompt after relevant functions are fetched
+    if st.session_state.step_results:
+        st.subheader("Generated Prompt (Editable):")
 
-                # Use the custom prompt or fallback to the default
-                custom_prompt = session_state.get("custom_prompt", None)
-                test_code, prompt_used = generate_test_code_with_selected_model(
-                    local_llm, user_query, session_state.step_results, custom_prompt
-                )
+        # Add a checkbox for toggling full-screen mode
+        full_screen = st.checkbox("View Prompt in Full-Screen Mode")
+        text_area_height = 600 if full_screen else 200
 
-                # Display the generated code
-                st.subheader("Generated Test Code:")
-                st.code(test_code, language="java")
+        # Display the text area for editing the prompt
+        st.session_state.custom_prompt = st.text_area(
+            "Editable Prompt:",
+            st.session_state.custom_prompt,
+            height=text_area_height
+        )
 
-                # Display the prompt used for generation
-                st.subheader("Prompt Used for Code Generation:")
-                st.text(prompt_used)
+        # Step 3: Display "Generate Code" button only if relevant functions are available
+        if st.button("Generate Code"):
+            st.info("Generating code...")
+            local_llm = initialize_model(model_choice)
+            if not local_llm:
+                st.error("Failed to initialize the model.")
+                return
+
+            test_code, prompt_used = generate_test_code_with_selected_model(
+                local_llm, user_query, st.session_state.step_results, st.session_state.custom_prompt
+            )
+
+            # Display generated code
+            st.subheader("Generated Test Code:")
+            st.code(test_code, language="java")
+
+            # Display the prompt used for generation
+            st.subheader("Prompt Used for Code Generation:")
+            st.text(prompt_used)
+
 
 # Run the application
 if __name__ == "__main__":
     main()
+
+
+# # Main Streamlit application
+# def main():
+#     st.title("Test Code Generation System")
+
+#     # Model selection dropdown
+#     model_choice = st.selectbox(
+#         "Choose a Model for Code Generation:",
+#         options=["DeepSeek", "Codex", "LLaMA 3", "LLaMA 3.1", "OpenAI"]
+#     )
+
+#     # Text input for user query
+#     user_query = st.text_area("Enter your scenario description:")
+#    # Variables to manage visibility
+#     session_state = st.session_state
+#     if "step_results" not in session_state:
+#         session_state.step_results = None
+#     if "custom_prompt" not in session_state:
+#         session_state.custom_prompt = None
+
+#     # Step 3: Fetch relevant functions
+#     if st.button("Get Relevant Functions"):
+#         # Load descriptions or relevant data
+#         extracted_data = load_descriptions()
+#         if not extracted_data:
+#             st.error("Failed to load extracted data.")
+#             return
+
+#         # Retrieve relevant functions
+#         session_state.step_results = process_steps_and_search(user_query, extracted_data)
+#         if not session_state.step_results:
+#             st.error("No relevant functions found.")
+#             return
+
+#         st.subheader("Relevant Functions:")
+#         st.text(format_step_results(session_state.step_results))
+
+#         # Display the generated prompt for review
+#         st.subheader("Generated Prompt:")
+#         # Initialize the custom prompt in session state if not already set
+#         if "custom_prompt" not in st.session_state:
+#             st.session_state.custom_prompt =f"""
+#             ### Instructions to Model:
+#             **Instructions**: Generate Java code that precisely implements each step from the 
+#             **Current Scenario** using only the **Relevant Functions** provided. Follow the 
+#             **Java Code Template** below, with accurate imports, object initialization, 
+#             and test data retrieval. Ensure that each function call strictly matches its 
+#             required parameters from the relevant functions, avoiding any extra comments, 
+#             explanations, or placeholders.
+
+#             ### Current Scenario:
+
+#             {user_query}
+
+#             ### Relevant Functions:
+#             - **Function Details**: Each function includes its class name, function name, 
+#             required input parameters, and expected output.
+#             - **Class and Function Information**:
+#             {format_step_results(session_state.step_results)}
+
+
+#             ### Java Code Template:
+
+#                 ```java
+#                 // **Imports**
+#                 // Import necessary classes based on the functions used in the scenario
+#                 import baseClass.BaseClass;
+#                 import iSAFE.ApplicationKeywords;
+#                 {{Dynamically include imports based on the function class names provided}}
+
+#                 public class TC_{{TestClassName}} extends ApplicationKeywords {{
+#                     BaseClass obj;
+#                     // Page object declarations based on relevant functions used
+#                     {{Dynamic Page Objects Initialization}}
+
+
+#                     public TC_{{TestClassName}}(BaseClass obj) {{
+#                         super(obj);
+#                         this.obj = obj;
+#                     }}
+
+#                     public void runScenario() {{
+#                         try {{
+#                             // Initialize page objects for each class used in the relevant functions
+#                             {{Dynamic Page Objects Assignment}}
+#                             {{Dynamic class initialization}}
+
+#                             // Retrieve test data for each parameter from the data source {{using retrive function}}
+#                             {{Dynamic Test Data Retrieval}}
+
+#                             // Execute steps as outlined in the Current Scenario:
+#                             {{Dynamic Scenario Implementation using}}
+
+#                         }} catch (Exception e) {{
+#                             e.printStackTrace();
+#                         }}
+#                         finally {{
+#                             print("pages")
+#                         }}
+#                     }}
+#                 }}
+#                 ```
+
+#                 ### Important note for code generation:
+#                 - The code generation should implement all the steps mentioned in the current scenario.
+#             """
+#            # Add a checkbox for toggling full-screen mode
+#             full_screen = st.checkbox("View Prompt in Full-Screen Mode")
+
+#             # Set the height based on the checkbox state
+#             text_area_height = 600 if full_screen else 200
+
+#             # Display the text area with persistent content
+#             st.text_area(
+#                 "Generated Prompt (editable):",
+#                 st.session_state.custom_prompt,
+#                 key="custom_prompt",
+#                 height=text_area_height
+#             )
+#         # Step 4: Generate code only if functions are available
+#         if session_state.step_results:
+#             st.subheader("Ready to Generate Code")
+
+#             if st.button("Generate Code"):
+#                 st.info("Processing...")
+#                 local_llm = initialize_model(model_choice)
+#                 if not local_llm:
+#                     return
+
+#                 # Use the custom prompt or fallback to the default
+#                 custom_prompt = session_state.get("custom_prompt", None)
+#                 test_code, prompt_used = generate_test_code_with_selected_model(
+#                     local_llm, user_query, session_state.step_results, custom_prompt
+#                 )
+
+#                 # Display the generated code
+#                 st.subheader("Generated Test Code:")
+#                 st.code(test_code, language="java")
+
+#                 # Display the prompt used for generation
+#                 st.subheader("Prompt Used for Code Generation:")
+#                 st.text(prompt_used)
+
+# # Run the application
+# if __name__ == "__main__":
+#     main()
