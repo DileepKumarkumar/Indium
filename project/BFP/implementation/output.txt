@@ -1,0 +1,108 @@
+```java
+// **Imports**
+import baseClass.BaseClass;
+import iSAFE.ApplicationKeywords;
+import pageObjects.Login_Logout;
+import pageObjects.Cases;
+import pageObjects.Home;
+import pageObjects.HomePage;
+import pageObjects.Customers;
+import pageObjects.Opportunity;
+import pageObjects.QCAndFMSPage;
+import pageObjects.QCN2P_Page;
+
+public class TC_CustomerPhotoDropdown extends ApplicationKeywords {
+    BaseClass obj;
+    Login_Logout loginLogout;
+    Cases cases;
+    Home home;
+    HomePage homePage;
+    Customers customers;
+    Opportunity opportunity;
+    QCAndFMSPage qcAndFMSPage;
+    QCN2P_Page qcn2P_Page;
+
+    public TC_CustomerPhotoDropdown(BaseClass obj) {
+        super(obj);
+        this.obj = obj;
+    }
+
+    public void runScenario() {
+        try {
+            // Dynamically initialize page objects for each relevant class
+            loginLogout = new Login_Logout(obj);
+            cases = new Cases(obj);
+            home = new Home(obj);
+            homePage = new HomePage(obj);
+            customers = new Customers(obj);
+            opportunity = new Opportunity(obj);
+            qcAndFMSPage = new QCAndFMSPage(obj);
+            qcn2P_Page = new QCN2P_Page(obj);
+
+            // Dynamically retrieve all test data required for input parameters
+            String appURL_Fos = retrieve("appURL_Fos");
+            String userName = retrieve("userName");
+            String password = retrieve("password");
+            String value = retrieve("value");
+            String customerName = retrieve("customerName");
+            String label = retrieve("label");
+            String FieldName = retrieve("FieldName");
+            String FieldType = retrieve("FieldType");
+            String fieldLabel = retrieve("fieldLabel");
+            String labelName = retrieve("labelName");
+            String buttonLabel = retrieve("buttonLabel");
+            String dropdownName = retrieve("dropdownName");
+            String ExpectedValue = retrieve("ExpectedValue");
+            String linkName = retrieve("linkName");
+            String sales = retrieve("sales");
+            String ElementName = retrieve("ElementName");
+
+            // Execute steps as outlined in the Current Scenario and pass the input parameters that are mentioned for the respective step function data.
+            loginLogout.loginToFOSApplication(appURL_Fos, userName, password);
+            cases.SearchValueInGlobalSearchField(value);
+            cases.clickOnCustomerLink(customerName);
+            home.clickOnheadertab(label);
+            home.VerifyFieldIsPresentOrNot(FieldName, FieldType);
+            homePage.clickEditOptionWithLabelInMasterPage(fieldLabel);
+            home.enterValueInFieldAdminLogin(labelName, value);
+            home.clickOnSaveButtonInMasterPageWithActionClass(buttonLabel);
+            homePage.clickEditOptionWithLabelInMasterPage(fieldLabel);
+            customers.selectvaluefromDigitalLineStatusdropdownAdminlogin(dropdownName, value);
+            home.clickOnSaveButtonInMasterPageWithActionClass(buttonLabel);
+            homePage.clickEditOptionWithLabelInMasterPage(fieldLabel);
+            home.selectvaluefromdropdownAdminlogin(dropdownName, value);
+            home.clickOnSaveButtonInMasterPageWithActionClass(buttonLabel);
+            cases.verifyAutoPopulatedValueInMaster(label, ExpectedValue);
+            loginLogout.loginToFOSApplication(appURL_Fos, userName, password);
+            cases.SearchValueInGlobalSearchField(value);
+            qcAndFMSPage.clickOnLink(linkName);
+            cases.verifyAutoPopulatedValueInMaster(label, ExpectedValue);
+            homePage.clickEditOptionWithLabelInMasterPage(fieldLabel);
+            home.selectvaluefromdropdownAdminlogin(dropdownName, value);
+            home.clickOnSaveButtonInMasterPageWithActionClass(buttonLabel);
+            home.selectSales(sales);
+            opportunity.completeNewQCPopup();
+            qcAndFMSPage.enterValueInSearchField(value);
+            qcAndFMSPage.clickOnCases(labelName);
+            qcn2P_Page.clickOnSubmitLink(linkName);
+            cases.clickOnLinkInCaseTab(linkName);
+            qcn2P_Page.VerifyandReturnDropdownValuesInField(dropdownName);
+            cases.ClickonTabsinCaseObject(ElementName);
+            qcn2P_Page.VerifyandReturnDropdownValuesInField(dropdownName);
+            opportunity.completeNewQCPopup();
+            qcAndFMSPage.logout();
+            loginLogout.loginToFOSApplication(appURL_Fos, userName, password);
+            cases.SearchValueInGlobalSearchField(value);
+            cases.clickOnCustomerLink(customerName);
+            home.clickOnheadertab(label);
+            homePage.clickEditOptionWithLabelInMasterPage(fieldLabel);
+            home.enterValueInFieldAdminLogin(labelName, value);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        finally {
+            System.out.println("Scenario execution completed.");
+        }
+    }
+}
+```
