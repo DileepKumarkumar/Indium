@@ -1,0 +1,40 @@
+Goal: customer photo dropdown   
+step 1:  login to FOS application   
+step 2: search value in global search field   
+step 3: click on customer link   
+step 4: click on header tab  
+step 5: verify 3in1 OTP process progress field is present or not   
+Step 6: verify OTP process progress field is present or not  
+step 7: click edit option with label in master page   
+step 8: enter value in field admin login   
+step 9: click on save button in master page with action class  
+step 10: click edit option with label in master pages
+step 11: select 3in1 OTP process progress value from drop down admin login  
+Step 12: select OTP process progress value from drop down admin login 
+Step 13: select stage value from drop down admin login 
+Step 14: click on save button in master page with action class 
+step 15: verify 3in1 OTP process progress auto populated value in master   
+step 16: login to fos application   
+step 17: search value in global search field   
+step 18: click on link   
+step 19: verify Auto Populated Value In Master  
+step 20: click Edit Option With Labe lIn Master Page  
+step 21: select value from drop down Admin login  
+step 22: click On Save Button In Master Page With Action Class  
+step 23: select Sales  
+step 24: transfer Control To Window  
+step 25: enter Value In Search Field  
+step 26: click On Cases  
+step 27: click On Submit Link  
+step 28: Click On Link In Case Tab  
+step 29: Verify and Return Drop down Values In Field  
+step 30: Click on Tabs in Case Object  
+step 31: Verify and Return Dropdown Values In Field  
+step 32: transfer Control To Window  
+step 33: Logout  
+step 34: login To FOS Application  
+step 35: Search Value In Global Search Field  
+step 36: click On Customer Link  
+step 37: click On header tab  
+step 38: click Edit Option With Labe lIn Master Page  
+step 39: enter Value In Field Admin Login 

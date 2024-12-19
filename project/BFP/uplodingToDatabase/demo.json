@@ -1,0 +1,14 @@
+[
+  {"id": 1, "code_line": "package iSAFE;"},
+  {"id": 2, "code_line": "import java.io.File;"},
+  {"id": 3, "code_line": "import java.io.IOException;"},
+  {"id": 4, "code_line": "public class ShortRun {"},
+  {"id": 5, "code_line": "    public static void main(String[] args) throws IOException {"},
+  {"id": 6, "code_line": "        ProcessBuilder pb = new ProcessBuilder(\"cmd.exe\", \"/C\", \"Start\", \"run.bat\");"},
+  {"id": 7, "code_line": "        File dir = new File(\".\\\\\");"},
+  {"id": 8, "code_line": "        pb.directory(dir);"},
+  {"id": 9, "code_line": "        Process p = pb.start();"},
+  {"id": 10, "code_line": "        System.exit(0);"},
+  {"id": 11, "code_line": "    }"},
+  {"id": 12, "code_line": "}"}
+]
